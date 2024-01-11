@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "title": "The Amazing Spider-Man",
+    "description": "Las aventuras de Spider-Man en la ciudad de Nueva York",
+    "price": 7.99,
+    "thumbnail": "spiderman-thumbnail.jpg",
+    "code": "SPD001",
+    "stock": 100
+  }
+]
