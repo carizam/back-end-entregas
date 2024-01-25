@@ -1,0 +1,12 @@
+<h2>Catálogo de Cómics</h2>
+<div id="products">
+  {{#each products}}
+    <div class="product">
+      <h3>{{this.title}}</h3>
+      <img src="{{this.thumbnail}}" alt="{{this.title}}" />
+      <p>{{this.description}}</p>
+      <p>Precio: ${{this.price}}</p>
+      <p>Stock: {{this.stock}}</p>
+    </div>
+  {{/each}}
+</div>

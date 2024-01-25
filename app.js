@@ -1,36 +1,64 @@
 const express = require("express");
+const { Server: HttpServer } = require("http");
+const { Server: IOServer } = require("socket.io");
+const handlebars = require("express-handlebars");
 const ProductManager = require("./productManager");
+const path = require("path");
+
 const app = express();
+const httpServer = new HttpServer(app);
+const io = new IOServer(httpServer);
 const port = 3000;
 
-const productManager = new ProductManager("products.json");
+const productManager = new ProductManager("data/products.json");
 
-app.get("/products", async (req, res) => {
-  try {
-    const limit = req.query.limit;
-    const products = await productManager.getProducts(limit);
-    res.json({ products });
-  } catch (error) {
-    res.status(500).json({ error: "Error al obtener productos" });
-  }
+app.engine(
+  "handlebars",
+  handlebars.engine({
+    defaultLayout: "main",
+  })
+);
+app.set("view engine", "handlebars");
+app.set("views", path.join(__dirname, "views"));
+
+app.use(express.static(path.join(__dirname, "public")));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.get("/", (req, res) => {
+  res.render("home", {
+    products: productManager.getProducts(),
+  });
 });
 
-app.get("/products/:pid", async (req, res) => {
-  try {
-    const pid = parseInt(req.params.pid);
-    const product = await productManager.getProductById(pid);
-
-    if (!product) {
-      res.status(404).json({ error: "Producto no encontrado" });
-    } else {
-      res.json({ product });
-    }
-  } catch (error) {
-    res.status(500).json({ error: "Error al obtener el producto" });
-  }
+app.get("/realtimeproducts", (req, res) => {
+  res.render("realTimeProducts", {
+    products: productManager.getProducts(),
+  });
 });
 
-// Iniciar el servidor
-app.listen(port, () => {
+io.on("connection", (socket) => {
+  console.log("Nuevo cliente conectado!");
+
+  socket.on("addProduct", (productData) => {
+    productManager.addProduct(
+      productData.title,
+      productData.description,
+      productData.price,
+      productData.thumbnail,
+      productData.code,
+      productData.stock
+    );
+    io.sockets.emit("products", productManager.getProducts());
+  });
+
+  socket.on("deleteProduct", (productId) => {
+    productManager.deleteProduct(productId);
+    io.sockets.emit("products", productManager.getProducts());
+  });
+});
+
+httpServer.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`);
 });
